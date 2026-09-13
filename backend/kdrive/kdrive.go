@@ -845,11 +845,16 @@ func (f *Fs) purgeCheck(ctx context.Context, dir string, check bool) error {
 		return err
 	}
 
-	nonEmpty, err := f.listAll(ctx, rootID, false, false, false, func(i *api.Item) bool {
-		return true
-	})
-	if (nonEmpty || err != nil) && check {
-		return fmt.Errorf("rmdir failed: directory %s not empty", dir)
+	if check {
+		nonEmpty, err := f.listAll(ctx, rootID, false, false, false, func(i *api.Item) bool {
+			return true
+		})
+		if err != nil {
+			return fmt.Errorf("rmdir: failed to check whether %q is empty: %w", dir, err)
+		}
+		if nonEmpty {
+			return fs.ErrorDirectoryNotEmpty
+		}
 	}
 
 	// https://developer.infomaniak.com/docs/api/delete/2/drive/%7Bdrive_id%7D/files/%7Bfile_id%7D
